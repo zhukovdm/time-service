@@ -6,14 +6,6 @@ on:
     branches:
       - main
 
-env:
-  AZURE_WEBAPP_NAME: time-service
-  AZURE_WEBAPP_PACKAGE_PATH: "./Time.Api/publish"
-  DOTNET_VERSION: "9.x"
-  SOLUTION_PATH: "Time.Api.sln"
-  API_PROJECT_PATH: "Time.Api"
-  PUBLISH_DIR: "./publish"
-
 jobs:
   build-and-test:
     name: Build and Test
@@ -25,25 +17,25 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: 8.x
 
       - name: Restore
-        run: dotnet restore ${{ env.SOLUTION_PATH }}
+        run: dotnet restore Time.Api.sln
 
       - name: Build
-        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+        run: dotnet build Time.Api.sln --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-restore --no-build --verbosity normal
+        run: dotnet test Time.Api.sln --configuration Release --no-restore --no-build --verbosity normal
 
       - name: Publish
-        run: dotnet publish ${{ env.API_PROJECT_PATH }} --configuration Release --no-restore --no-build --property:PublishDir=${{ env.PUBLISH_DIR }}
+        run: dotnet publish Time.Api --configuration Release --no-restore --no-build --property:PublishDir=./publish
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: webapp
-          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          path: ./Time.Api/publish
 
   deploy:
     name: Deploy to Azure
@@ -55,11 +47,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: webapp
-          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          path: ./Time.Api/publish
 
       - name: Deploy
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-name: time-service
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}"
+          package: ./Time.Api/publish
